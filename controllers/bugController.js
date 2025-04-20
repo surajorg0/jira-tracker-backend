@@ -7,7 +7,7 @@ const Project = require('../models/Project');
 // @access  Private/TeamLead
 exports.createBug = async (req, res) => {
   try {
-    const { title, description, relatedToProject, assignedTo } = req.body;
+    const { title, description, relatedToProject, assignedTo, severity } = req.body;
     
     // Check if project exists
     const project = await Project.findById(relatedToProject);
@@ -19,8 +19,9 @@ exports.createBug = async (req, res) => {
       title,
       description,
       relatedToProject,
-      reportedBy: req.user.id,
-      assignedTo
+      reportedBy: req.user._id,
+      assignedTo,
+      severity: severity || 'Medium'
     });
     
     const bug = await newBug.save();
@@ -49,7 +50,7 @@ exports.getAllBugs = async (req, res) => {
         .sort({ createdAt: -1 });
     } else {
       // If regular user, get only assigned bugs
-      bugs = await Bug.find({ assignedTo: req.user.id })
+      bugs = await Bug.find({ assignedTo: req.user._id })
         .populate('reportedBy', 'name')
         .populate('assignedTo', 'name')
         .populate('relatedToProject', 'title')
@@ -83,7 +84,7 @@ exports.getBugById = async (req, res) => {
     if (
       req.user.role !== 'admin' && 
       req.user.role !== 'teamlead' && 
-      bug.assignedTo._id.toString() !== req.user.id
+      bug.assignedTo._id.toString() !== req.user._id.toString()
     ) {
       return res.status(403).json({ msg: 'Not authorized to view this bug' });
     }
@@ -105,7 +106,7 @@ exports.getBugById = async (req, res) => {
 // @access  Private
 exports.updateBug = async (req, res) => {
   try {
-    const { title, description, assignedTo, status } = req.body;
+    const { title, description, assignedTo, status, severity } = req.body;
     
     const bug = await Bug.findById(req.params.id);
     
@@ -117,7 +118,7 @@ exports.updateBug = async (req, res) => {
     if (
       req.user.role !== 'admin' && 
       req.user.role !== 'teamlead' && 
-      bug.assignedTo.toString() !== req.user.id
+      bug.assignedTo.toString() !== req.user._id.toString()
     ) {
       return res.status(403).json({ msg: 'Not authorized to update this bug' });
     }
@@ -131,6 +132,7 @@ exports.updateBug = async (req, res) => {
       if (description) bug.description = description;
       if (assignedTo) bug.assignedTo = assignedTo;
       if (status) bug.status = status;
+      if (severity) bug.severity = severity;
     }
     
     bug.updatedAt = Date.now();
@@ -163,7 +165,7 @@ exports.deleteBug = async (req, res) => {
     // Only the reporter or admin can delete
     if (
       req.user.role !== 'admin' && 
-      bug.reportedBy.toString() !== req.user.id
+      bug.reportedBy.toString() !== req.user._id.toString()
     ) {
       return res.status(403).json({ msg: 'Not authorized to delete this bug' });
     }
@@ -171,7 +173,7 @@ exports.deleteBug = async (req, res) => {
     // Remove associated files
     await File.deleteMany({ refType: 'bug', refId: bug._id });
     
-    await bug.remove();
+    await bug.deleteOne();
     
     res.json({ msg: 'Bug removed' });
   } catch (err) {

@@ -17,7 +17,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/jira_tracker', {
+mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://surajorg44:WM6neW6yd7U9oOEq@jira-tracker.9o5iykb.mongodb.net/?retryWrites=true&w=majority&appName=Jira-Tracker', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })

@@ -12,12 +12,15 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
     trim: true,
-    lowercase: true
+    lowercase: true,
+    match: [
+      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+      'Please enter a valid email address'
+    ]
   },
   phone: {
     type: String,
-    required: true,
-    unique: true
+    trim: true
   },
   role: {
     type: String,
@@ -26,11 +29,17 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    minlength: 5,
+    select: false
   },
   isApproved: {
     type: Boolean,
     default: false
+  },
+  profilePicture: {
+    type: String,
+    default: 'default-avatar.png'
   },
   createdAt: {
     type: Date,
@@ -38,9 +47,12 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving
+// Encrypt password before save
 UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  // Only hash the password if it's modified (or new)
+  if (!this.isModified('password')) {
+    return next();
+  }
   
   try {
     const salt = await bcrypt.genSalt(10);
@@ -50,6 +62,11 @@ UserSchema.pre('save', async function(next) {
     next(error);
   }
 });
+
+// Method to check if password matches
+UserSchema.methods.checkPassword = async function(enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 // Compare password method
 UserSchema.methods.comparePassword = async function(password) {

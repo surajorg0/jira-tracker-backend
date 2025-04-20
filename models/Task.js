@@ -3,26 +3,27 @@ const mongoose = require('mongoose');
 const TaskSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Title is required']
+    required: true,
+    trim: true
   },
   description: {
     type: String,
-    required: [true, 'Description is required']
+    required: true
   },
   project: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',
-    required: [true, 'Project is required']
+    required: true
   },
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Assigned user is required']
+    required: true
   },
   assignedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Assigning user is required']
+    required: true
   },
   status: {
     type: String,
@@ -36,8 +37,22 @@ const TaskSchema = new mongoose.Schema({
   },
   dueDate: {
     type: Date,
-    required: [true, 'Due date is required']
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
-}, { timestamps: true });
+});
+
+// Update the updatedAt timestamp before saving
+TaskSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
 module.exports = mongoose.model('Task', TaskSchema); 

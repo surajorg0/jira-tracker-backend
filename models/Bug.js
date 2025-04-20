@@ -30,6 +30,11 @@ const BugSchema = new mongoose.Schema({
     enum: ['Pending', 'In Progress', 'Completed'],
     default: 'Pending'
   },
+  severity: {
+    type: String,
+    enum: ['Low', 'Medium', 'High', 'Critical'],
+    default: 'Medium'
+  },
   attachments: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'File'
